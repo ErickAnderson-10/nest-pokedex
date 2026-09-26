@@ -4,18 +4,28 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { CreatePokemonDto } from './dto/create-pokemon.dto.js';
-import { UpdatePokemonDto } from './dto/update-pokemon.dto.js';
+import { InjectModel } from '@nestjs/mongoose';
+import { ConfigService } from '@nestjs/config';
+
 import { isValidObjectId, Model } from 'mongoose';
 import { Pokemon } from './entities/pokemon.entity.js';
-import { InjectModel } from '@nestjs/mongoose';
+
+import { CreatePokemonDto } from './dto/create-pokemon.dto.js';
+import { UpdatePokemonDto } from './dto/update-pokemon.dto.js';
+import { PaginationDto } from '../common/dto/pagination.dto.js';
 
 @Injectable()
 export class PokemonService {
+  private defaultLimit: number;
+
   constructor(
     @InjectModel(Pokemon.name) //Se usa esto xq el Model no es una implementacion propia como tal. Sirve para que podamos inyectar modelos en este servicio
     private readonly pokemonModel: Model<Pokemon>,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    //console.log(process.env.DEFAULT_LIMIT); //Forma incorrecta de hacerlo, lo mejor es usar el configService
+    this.defaultLimit = configService.get<number>('defaultLimit') || 7;
+  }
 
   //Las inserciones a la bd son asíncronas
   //Prioriza realizar pocas consultas
@@ -29,8 +39,11 @@ export class PokemonService {
     }
   }
 
-  findAll() {
-    return `This action returns all pokemon`;
+  findAll(paginationDto: PaginationDto) {
+    const { limit = this.defaultLimit, offset = 0 } = paginationDto;
+    return this.pokemonModel.find().limit(limit).skip(offset).sort({
+      no: 1, //Que lo ordene de forma ascendente
+    });
   }
 
   //ASíncrono xq tenemos que hacer conexiones a la bd

@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { ConfigModule } from '@nestjs/config';
 import { PokemonService } from './pokemon.service.js';
 import { PokemonController } from './pokemon.controller.js';
-import { MongooseModule } from '@nestjs/mongoose';
 import { Pokemon, PokemonSchema } from './entities/pokemon.entity.js';
 
 @Module({
@@ -9,6 +10,7 @@ import { Pokemon, PokemonSchema } from './entities/pokemon.entity.js';
   providers: [PokemonService],
   //Módulos -> Imports
   imports: [
+    ConfigModule,
     MongooseModule.forFeature([
       {
         name: Pokemon.name,
@@ -16,5 +18,6 @@ import { Pokemon, PokemonSchema } from './entities/pokemon.entity.js';
       },
     ]),
   ],
+  exports: [MongooseModule], //Cuando nosotros exportamos el moongosemodule, va a ir así como está con esas configuraciones
 })
 export class PokemonModule {}
